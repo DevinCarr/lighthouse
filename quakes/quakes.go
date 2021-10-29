@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	geo "github.com/devincarr/lighthouse/geo"
-    mqtt "github.com/devincarr/lighthouse/mqtt"
+	mqtt "github.com/devincarr/lighthouse/mqtt"
 
 	geojson "github.com/devincarr/go.geojson"
 )
@@ -41,17 +41,17 @@ func checkQuakes(fc *geojson.FeatureCollection, local geo.Point, dist float64) [
 }
 
 func LocalQuakes(local geo.Point, distance float64) ([]mqtt.Alert, error) {
-    alerts := make([]mqtt.Alert, 0)
+	alerts := make([]mqtt.Alert, 0)
 	quakes, err := getQuakes()
 	if err != nil {
-        return alerts, err
+		return alerts, err
 	}
-    localQuakes := checkQuakes(quakes, local, distance)
-    for _, f := range localQuakes {
-        id := f.ID.(string)
-        place, _ := f.PropertyString("place")
-        url, _ := f.PropertyString("url")
-        alerts = append(alerts, mqtt.Alert{Topic,id,place,url})
-    }
-    return alerts, nil
+	localQuakes := checkQuakes(quakes, local, distance)
+	for _, f := range localQuakes {
+		id := f.ID.(string)
+		place, _ := f.PropertyString("place")
+		url, _ := f.PropertyString("url")
+		alerts = append(alerts, mqtt.Alert{Topic, id, place, url})
+	}
+	return alerts, nil
 }
