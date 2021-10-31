@@ -49,9 +49,10 @@ func LocalQuakes(client *http.Client, local geo.Point, distance float64) ([]mqtt
 	localQuakes := checkQuakes(quakes, local, distance)
 	for _, f := range localQuakes {
 		id := f.ID.(string)
-		place, _ := f.PropertyString("place")
+		title, _ := f.PropertyString("title")
 		url, _ := f.PropertyString("url")
-		alerts = append(alerts, mqtt.Alert{Topic, id, place, url})
+
+		alerts = append(alerts, mqtt.Alert{Topic, id, title, url})
 	}
 	return alerts, nil
 }
