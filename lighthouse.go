@@ -1,17 +1,22 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
+	"net/http"
 	"time"
 
 	geo "github.com/devincarr/lighthouse/geo"
 	mqtt "github.com/devincarr/lighthouse/mqtt"
 	quakes "github.com/devincarr/lighthouse/quakes"
 	weather "github.com/devincarr/lighthouse/weather"
+
+	dnsresolver "github.com/rs/dnscache"
 )
 
 type MqttConfig struct {
@@ -37,6 +42,29 @@ type Config struct {
 	Earthquake EarthquakeConfig
 	Weather    WeatherConfig
 }
+
+var r = &dnsresolver.Resolver{}
+var t = &http.Transport{
+	DialContext: func(ctx context.Context, network string, addr string) (conn net.Conn, err error) {
+		host, port, err := net.SplitHostPort(addr)
+		if err != nil {
+			return nil, err
+		}
+		ips, err := r.LookupHost(ctx, host)
+		if err != nil {
+			return nil, err
+		}
+		for _, ip := range ips {
+			var dialer net.Dialer
+			conn, err = dialer.DialContext(ctx, network, net.JoinHostPort(ip, port))
+			if err == nil {
+				break
+			}
+		}
+		return
+	},
+}
+var client = &http.Client{Transport: t}
 
 func main() {
 	// Parse config
@@ -65,15 +93,46 @@ func main() {
 		panic(err)
 	}
 
+	// Attempt to pre-cache dns responses
+	for i := 0; i <= 5; i++ {
+		addrs, err := r.LookupHost(context.Background(), "earthquake.usgs.gov")
+		if err != nil {
+			log.Println("error looking up: ", err)
+			time.Sleep(2 * time.Second)
+			continue
+		}
+		log.Println("Pre-cache DNS earthquake.usgs.gov: ", addrs)
+		break
+	}
+	for i := 0; i <= 5; i++ {
+		addrs, err := r.LookupHost(context.Background(), "api.weather.gov")
+		if err != nil {
+			log.Println("error looking up: ", err)
+			time.Sleep(2 * time.Second)
+			continue
+		}
+		log.Println("Pre-cache DNS api.weather.gov: ", addrs)
+		break
+	}
+
+	// Call to refresh will refresh names in cache.
+	go func() {
+		t := time.NewTicker(5 * time.Minute)
+		defer t.Stop()
+		for range t.C {
+			r.Refresh(true)
+		}
+	}()
+
 	local := geo.Point{c.Latitude, c.Longitude}
 	for {
 		alerts := make([]mqtt.Alert, 0)
-		alerts, err := quakes.LocalQuakes(local, c.Distance)
+		alerts, err := quakes.LocalQuakes(client, local, c.Distance)
 		if err != nil {
 			log.Printf("Unable to fetch local quake alerts: ", err)
 		}
 		fmt.Printf("Local earthquake alerts: %d\n", len(alerts))
-		weatherAlerts, err := weather.LocalAlerts(c.Weather.Zone, c.Weather.Email)
+		weatherAlerts, err := weather.LocalAlerts(client, c.Weather.Zone, c.Weather.Email)
 		if err != nil {
 			log.Printf("Unable to fetch local weather alerts: ", err)
 		}

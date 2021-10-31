@@ -14,9 +14,7 @@ const Topic = "alerts/weather"
 const NWSAlertsUrl = "https://alerts.weather.gov/cap/wwaatmget.php?x=%s&y=1"
 const UserAgentFormat = "(lighthouse, %s)"
 
-var client = &http.Client{}
-
-func getNWSAlerts(zone string, email string) (*geojson.FeatureCollection, error) {
+func getNWSAlerts(client *http.Client, zone string, email string) (*geojson.FeatureCollection, error) {
 	req, err := http.NewRequest("GET", "https://api.weather.gov/alerts/active/zone/"+zone, nil)
 	useragent := fmt.Sprintf(UserAgentFormat, email)
 	req.Header.Add("User-Agent", useragent)
@@ -32,9 +30,9 @@ func getNWSAlerts(zone string, email string) (*geojson.FeatureCollection, error)
 	return geojson.UnmarshalFeatureCollection(body)
 }
 
-func LocalAlerts(zone string, email string) ([]mqtt.Alert, error) {
+func LocalAlerts(client *http.Client, zone string, email string) ([]mqtt.Alert, error) {
 	alerts := make([]mqtt.Alert, 0)
-	weatherAlerts, err := getNWSAlerts(zone, email)
+	weatherAlerts, err := getNWSAlerts(client, zone, email)
 	if err != nil {
 		return alerts, err
 	}

@@ -12,8 +12,8 @@ import (
 
 const Topic = "alerts/earthquakes"
 
-func getQuakes() (*geojson.FeatureCollection, error) {
-	resp, err := http.Get("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson")
+func getQuakes(client *http.Client) (*geojson.FeatureCollection, error) {
+	resp, err := client.Get("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson")
 	if err != nil {
 		return new(geojson.FeatureCollection), err
 	}
@@ -40,9 +40,9 @@ func checkQuakes(fc *geojson.FeatureCollection, local geo.Point, dist float64) [
 	return localQuakes
 }
 
-func LocalQuakes(local geo.Point, distance float64) ([]mqtt.Alert, error) {
+func LocalQuakes(client *http.Client, local geo.Point, distance float64) ([]mqtt.Alert, error) {
 	alerts := make([]mqtt.Alert, 0)
-	quakes, err := getQuakes()
+	quakes, err := getQuakes(client)
 	if err != nil {
 		return alerts, err
 	}
