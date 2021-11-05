@@ -43,6 +43,8 @@ Example MQTT payload (earthquake):
 
 Example Home Assistant Automation (earthquake):
 
+![Mobile Notificatio Screenshot](./screenshot.jpeg)
+
 ```yaml
 alias: Send Push Notification for Local Earthquake Alerts
 description: 'Send Push Notification for Local Earthquake Alerts'
