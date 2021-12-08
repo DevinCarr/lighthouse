@@ -30,17 +30,19 @@ func getNWSAlerts(client *http.Client, zone string, email string) (*geojson.Feat
 	return geojson.UnmarshalFeatureCollection(body)
 }
 
-func LocalAlerts(client *http.Client, zone string, email string) ([]mqtt.Alert, error) {
+func LocalAlerts(client *http.Client, zones []string, email string) ([]mqtt.Alert, error) {
 	alerts := make([]mqtt.Alert, 0)
-	weatherAlerts, err := getNWSAlerts(client, zone, email)
-	if err != nil {
-		return alerts, err
-	}
-	for _, f := range weatherAlerts.Features {
-		id := f.ID.(string)
-		title, _ := f.PropertyString("headline")
-		url := fmt.Sprintf(NWSAlertsUrl, zone)
-		alerts = append(alerts, mqtt.Alert{Topic, id, title, url})
+	for _, zone := range zones {
+		weatherAlerts, err := getNWSAlerts(client, zone, email)
+		if err != nil {
+			return alerts, err
+		}
+		for _, f := range weatherAlerts.Features {
+			id := f.ID.(string)
+			title, _ := f.PropertyString("headline")
+			url := fmt.Sprintf(NWSAlertsUrl, zone)
+			alerts = append(alerts, mqtt.Alert{Topic, id, title, url})
+		}
 	}
 	return alerts, nil
 }

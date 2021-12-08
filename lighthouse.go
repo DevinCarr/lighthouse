@@ -29,8 +29,8 @@ type EarthquakeConfig struct {
 }
 
 type WeatherConfig struct {
-	Zone  string
-	Email string
+	Zones	[]string
+	Email	string
 }
 
 type Config struct {
@@ -132,7 +132,7 @@ func main() {
 			log.Printf("Unable to fetch local quake alerts: ", err)
 		}
 		fmt.Printf("Local earthquake alerts: %d\n", len(alerts))
-		weatherAlerts, err := weather.LocalAlerts(client, c.Weather.Zone, c.Weather.Email)
+		weatherAlerts, err := weather.LocalAlerts(client, c.Weather.Zones, c.Weather.Email)
 		if err != nil {
 			log.Printf("Unable to fetch local weather alerts: ", err)
 		}

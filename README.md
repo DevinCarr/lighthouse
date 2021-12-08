@@ -15,7 +15,7 @@ Notification system for local earthquakes from USGS and weather alerts from NWS.
     "Distance": 500.0, // in km
     "Interval": "1m", // interval to check sources
     "Weather": {
-        "Zone": "AKZ101", // NWS weather zone (https://alerts.weather.gov/index.php)
+        "Zones": ["AKZ101", "AKZ225"], // NWS weather zones (https://alerts.weather.gov/index.php)
         "Email": "email@email.com" // Email for NWS API
     },
     "Mqtt": {
